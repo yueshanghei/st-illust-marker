@@ -1,0 +1,16 @@
+{
+    "name": "st-illust-marker",
+    "version": "2.0.0",
+    "description": "Marker-driven auto illustration for SillyTavern and TauriTavern",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "build": "node build.mjs . dist/index.js",
+        "test": "node test/run.mjs",
+        "verify": "node build.mjs . dist/index.js && node test/run.mjs"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "license": "MIT"
+}

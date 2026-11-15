@@ -1,0 +1,1034 @@
+/* =====================================================================
+ * 插图标记自动配图 —— 样式表
+ *
+ * 兼容性说明：
+ *   - 本文件使用普通选择器（不含 @layer），TauriTavern 的老 WebView 降级
+ *     路径（ttCompat=layer）不会改动内容，SillyTavern 也能直接加载。
+ *   - 颜色以固定值为主，不依赖 --SmartTheme* 变量是否存在；
+ *     缺失时按固定值渲染，存在时也不会被主题覆盖成不可读的对比度。
+ *   - 所有 position:fixed 元素都有 100dvh 兜底：某些主题把 html 设成
+ *     transform + height:0，会让 fixed 的包含块压扁，这里统一走
+ *     .illust-ui-layer 这个 100vw×100dvh 的绝对定位图层。
+ *   - 触控目标最小 40px，移动端 44px；底部留 env(safe-area-inset-bottom)。
+ * ===================================================================== */
+/* 插图标记：隐藏标记文本 + 内联图片样式 */
+.illust-marker-hidden {
+    display: none !important;
+}
+
+.illust-inline {
+    margin: 10px 0 14px;
+    text-align: center;
+}
+
+.illust-inline img {
+    max-width: 100%;
+    max-height: 640px;
+    border-radius: 10px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+    cursor: zoom-in;
+    transition: transform 0.15s ease;
+}
+
+.illust-inline img:hover {
+    transform: scale(1.01);
+}
+
+.illust-inline .illust-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #bbb;
+    font-size: 0.9em;
+}
+
+.illust-inline .illust-error {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(220, 60, 60, 0.12);
+    color: #f08a8a;
+    font-size: 0.85em;
+}
+
+.illust-generate-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.07);
+    color: inherit;
+    font-size: 0.88em;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.illust-generate-btn:hover:not(:disabled) {
+    background: rgba(120, 170, 255, 0.18);
+    border-color: rgba(120, 170, 255, 0.5);
+}
+
+.illust-generate-btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+/* ---- 插图历史面板 ---- */
+.illust-history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 40000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.illust-history-panel {
+    background: #1b1b20;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    width: min(1100px, 94vw);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.illust-history-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.illust-history-close {
+    background: none;
+    border: none;
+    color: #bbb;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.illust-history-close:hover { color: #fff; }
+
+.illust-history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    overflow: auto;
+}
+
+.illust-history-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.illust-history-card img {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    display: block;
+    cursor: zoom-in;
+    transition: transform 0.15s;
+}
+
+.illust-history-card img:hover { transform: scale(1.03); }
+
+.illust-history-meta {
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.illust-history-open {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 11px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.illust-history-empty {
+    padding: 40px;
+    text-align: center;
+    color: #999;
+    grid-column: 1 / -1;
+}
+
+.illust-history-foot {
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    color: #888;
+}
+
+.illust-highlight {
+    outline: 2px solid rgba(120, 170, 255, 0.85);
+    outline-offset: 2px;
+}
+
+/* ---- 移动端适配 ---- */
+@media (max-width: 768px) {
+    .illust-inline {
+        margin: 8px 0 12px;
+    }
+
+    .illust-inline img {
+        max-height: 55dvh;
+        border-radius: 8px;
+    }
+
+    .illust-generate-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 16px;
+        font-size: 0.95em;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .illust-history-overlay {
+        padding: 8px;
+        align-items: flex-end;
+    }
+
+    .illust-history-panel {
+        width: 100%;
+        max-height: 92dvh;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .illust-history-head {
+        padding: 10px 12px;
+        font-size: 15px;
+    }
+
+    .illust-history-close {
+        font-size: 22px;
+        min-width: 40px;
+        min-height: 40px;
+        padding: 4px 8px;
+    }
+
+    .illust-history-grid {
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .illust-history-card img {
+        height: 160px;
+    }
+
+    .illust-history-open {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .illust-history-foot {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    #illust-portable-settings label {
+        flex-wrap: wrap;
+    }
+
+    #illust-portable-settings .text_pole {
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    .illust-history-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .illust-history-card img {
+        height: 145px;
+    }
+}
+
+/* ---- 页内全屏查看 ---- */
+.illust-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 40001;
+    background: rgba(0, 0, 0, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.illust-lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    cursor: zoom-out;
+}
+
+.illust-lightbox-close {
+    position: absolute;
+    top: calc(10px + env(safe-area-inset-top));
+    right: calc(10px + env(safe-area-inset-right));
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* iPhone 底部安全区 */
+@media (max-width: 768px) {
+    .illust-history-panel {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .illust-history-grid {
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+}
+
+/* ---- 修复 ST 全局 .menu_button { width: min-content } 导致中文按钮竖排 ---- */
+#illust-portable-settings .menu_button {
+    width: auto;
+    min-width: max-content;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    #illust-portable-settings .menu_button {
+        width: 100%;
+        min-width: 0;
+        padding: 11px 14px;
+        margin: 8px 0;
+    }
+}
+
+/* ---- 修复：主题把 body 设为 fixed + html 有 transform 时，inset:0 的包含块被压扁 ---- */
+.illust-history-overlay,
+.illust-lightbox {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    box-sizing: border-box;
+}
+
+/* ---- 顶层 UI 图层（修复 html{transform;height:0} 导致 fixed 元素跑到屏幕外） ---- */
+.illust-ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    z-index: 39999;
+    pointer-events: none;
+}
+
+.illust-ui-layer > * {
+    pointer-events: auto;
+}
+
+/* ---- spinner / toast / fab / lightbox controls ---- */
+.illust-spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #8ab4ff;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: -2px;
+    margin-right: 6px;
+    animation: illust-spin 0.8s linear infinite;
+}
+
+@keyframes illust-spin {
+    to { transform: rotate(360deg); }
+}
+
+.illust-toast {
+    position: absolute;
+    left: 50%;
+    bottom: calc(140px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(8px);
+    background: rgba(28, 28, 34, 0.96);
+    color: #f0f0f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 40002;
+    opacity: 0;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.illust-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.illust-fab {
+    position: absolute;
+    right: 14px;
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(38, 38, 46, 0.94);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    z-index: 39999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.illust-fab.hidden {
+    display: none;
+}
+
+.illust-lightbox {
+    padding-top: calc(64px + env(safe-area-inset-top));
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+
+.illust-lightbox-bar {
+    position: absolute;
+    top: calc(10px + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 8px;
+    padding: 0 12px;
+    z-index: 2;
+}
+
+.illust-lb-btn {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(30, 30, 36, 0.9);
+    color: #eee;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.illust-lb-btn:disabled {
+    opacity: 0.5;
+    cursor: progress;
+}
+
+.illust-lb-close {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.illust-lb-prompt {
+    position: absolute;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(680px, 92vw);
+    background: rgba(24, 24, 30, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    padding: 12px;
+    z-index: 3;
+}
+
+.illust-lb-text {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.06);
+    color: #eee;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.illust-lb-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.illust-lb-busy {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 26, 0.92);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #ddd;
+    z-index: 4;
+}
+
+.illust-lb-actions small {
+    color: #9aa3b2;
+    font-size: 12px;
+}
+
+/* ---- history panel: selection + delete ---- */
+.illust-history-tools {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.illust-hd-btn {
+    min-height: 36px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.illust-hd-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.illust-hd-danger {
+    border-color: rgba(255, 90, 90, 0.5);
+    color: #ff9a9a;
+    background: rgba(200, 40, 40, 0.15);
+}
+
+.illust-hd-close {
+    width: 36px;
+    padding: 0;
+}
+
+.illust-history-title {
+    font-size: 15px;
+}
+
+.illust-card-del {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.illust-card-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 2;
+}
+
+.illust-history-card.selected {
+    outline: 2px solid #6aa6ff;
+    outline-offset: -2px;
+}
+
+.illust-history-card.selected .illust-card-check {
+    background: #6aa6ff;
+    border-color: #6aa6ff;
+}
+
+.illust-history-open {
+    top: auto;
+    bottom: 34px;
+    right: 8px;
+}
+
+.illust-history-meta {
+    padding-right: 52px;
+}
+
+@media (max-width: 768px) {
+    .illust-hd-btn {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .illust-card-del {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+    }
+
+    .illust-card-check {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .illust-history-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .illust-history-tools {
+        justify-content: space-between;
+        flex-wrap: nowrap;
+    }
+
+    .illust-hd-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 8px 6px;
+        font-size: 14px;
+    }
+
+    .illust-hd-close {
+        flex: 0 0 44px;
+        min-width: 44px;
+    }
+}
+
+/* ---- lightbox zoom ---- */
+.illust-lb-zoom {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.illust-lb-zbtn {
+    min-width: 40px;
+    padding: 9px 8px;
+}
+
+.illust-lb-img {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    transform-origin: center center;
+    transition: none;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.illust-lb-img.zooming {
+    transition: transform 0.12s ease-out;
+}
+
+.illust-lightbox-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+
+.illust-history-open {
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .illust-lb-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .illust-lb-zbtn {
+        min-width: 44px;
+        min-height: 40px;
+    }
+}
+
+/* ---- privacy mode ---- */
+.illust-img-wrap {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.illust-img-wrap img {
+    display: block;
+}
+
+.illust-hide-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.illust-privacy-btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    color: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.illust-privacy-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    .illust-hide-btn {
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+
+    .illust-privacy-btn {
+        width: 100%;
+        padding: 14px;
+        font-size: 14px;
+    }
+}
+
+/* ---- prominent controls ---- */
+.illust-lb-btn {
+    min-height: 40px;
+    background: linear-gradient(180deg, rgba(96, 150, 255, 0.42), rgba(70, 120, 230, 0.3));
+    border: 1px solid rgba(130, 180, 255, 0.7);
+    color: #f2f7ff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.illust-lb-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(120, 170, 255, 0.6), rgba(80, 135, 245, 0.45));
+    border-color: #a9cbff;
+}
+
+.illust-lb-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.illust-lb-close {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.illust-fab {
+    background: linear-gradient(160deg, #6aa3ff, #3a6ee0);
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    font-size: 22px;
+    box-shadow: 0 8px 22px rgba(60, 120, 255, 0.5), 0 0 0 4px rgba(90, 150, 255, 0.16);
+}
+
+.illust-fab:hover {
+    background: linear-gradient(160deg, #7fb2ff, #4a7ff0);
+}
+
+.illust-generate-btn {
+    background: linear-gradient(160deg, rgba(105, 160, 255, 0.92), rgba(60, 110, 225, 0.92));
+    border: 1px solid rgba(180, 210, 255, 0.75);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 3px 14px rgba(50, 100, 220, 0.35);
+}
+
+.illust-generate-btn:hover:not(:disabled) {
+    background: linear-gradient(160deg, rgba(130, 180, 255, 0.98), rgba(80, 130, 240, 0.98));
+}
+
+.illust-privacy-btn {
+    border: 1px dashed rgba(140, 185, 255, 0.8);
+    background: rgba(90, 140, 255, 0.16);
+    color: #eaf2ff;
+    font-weight: 600;
+}
+
+.illust-privacy-btn:hover {
+    background: rgba(90, 140, 255, 0.28);
+}
+
+.illust-hd-btn {
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .illust-lb-btn {
+        min-height: 42px;
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+
+    .illust-generate-btn {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    .illust-privacy-btn {
+        min-height: 44px;
+    }
+}
+
+/* ---- theme-safe contrast (works on light & dark themes) ---- */
+.illust-privacy-btn {
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: linear-gradient(160deg, rgba(90, 150, 255, 0.98), rgba(45, 95, 220, 0.98));
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 3px 14px rgba(40, 90, 210, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.illust-privacy-btn:hover {
+    background: linear-gradient(160deg, rgba(115, 170, 255, 1), rgba(60, 115, 240, 1));
+}
+
+.illust-hd-btn {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.illust-hd-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.illust-hd-danger {
+    color: #ffffff;
+    background: linear-gradient(180deg, rgba(230, 70, 70, 0.9), rgba(190, 40, 40, 0.9));
+    border-color: rgba(255, 140, 140, 0.75);
+}
+
+/* ---- 生成进度 / 完成提示条 ---- */
+.illust-progress {
+    position: absolute;
+    left: 50%;
+    bottom: calc(146px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+    padding: 11px 14px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #ffffff;
+    z-index: 40003;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.illust-progress:not(.hidden) {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.illust-progress.is-clickable {
+    cursor: pointer;
+}
+
+.illust-progress-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.illust-progress-icon {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.illust-progress.is-running {
+    background: linear-gradient(160deg, #3f7bf2, #1f53c9);
+    border: 1px solid rgba(165, 200, 255, 0.7);
+}
+
+.illust-progress.is-done {
+    background: linear-gradient(160deg, #2fae74, #14804f);
+    border: 1px solid rgba(160, 245, 195, 0.8);
+    animation: illust-pop 0.32s ease-out;
+}
+
+.illust-progress.is-error {
+    background: linear-gradient(160deg, #e04545, #a82222);
+    border: 1px solid rgba(255, 160, 160, 0.75);
+}
+
+@keyframes illust-pop {
+    0% { transform: translateX(-50%) translateY(10px) scale(0.96); }
+    60% { transform: translateX(-50%) translateY(0) scale(1.03); }
+    100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.illust-progress-close {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.illust-progress-close[hidden] {
+    display: none;
+}
+
+/* ---- 悬浮球：跳插图 / 回阅读位置 ---- */
+.illust-fab {
+    width: 52px;
+    height: 52px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.illust-fab.dragging {
+    transform: scale(1.1);
+    cursor: grabbing;
+    opacity: 0.92;
+    z-index: 40004;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(90, 150, 255, 0.22);
+}
+
+.illust-fab.is-back {
+    background: linear-gradient(160deg, #4fbf8d, #2a8f62);
+    box-shadow: 0 8px 22px rgba(40, 150, 100, 0.5), 0 0 0 4px rgba(80, 200, 150, 0.18);
+}
+
+.illust-fab.is-back:hover {
+    background: linear-gradient(160deg, #5fcf9d, #359f72);
+}
+
+.illust-fab-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    border: 2px solid #ffffff;
+    background: #ff4757;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.illust-fab-badge[hidden] {
+    display: none;
+}
+
+.illust-fab.has-new {
+    animation: illust-fab-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes illust-fab-pulse {
+    0%, 100% { box-shadow: 0 8px 22px rgba(60, 120, 255, 0.5), 0 0 0 0 rgba(120, 180, 255, 0.55); }
+    50% { box-shadow: 0 8px 22px rgba(60, 120, 255, 0.5), 0 0 0 11px rgba(120, 180, 255, 0); }
+}
+
+@media (max-width: 768px) {
+    .illust-progress {
+        bottom: calc(204px + env(safe-area-inset-bottom));
+        max-width: calc(100vw - 20px);
+        font-size: 13px;
+        padding: 11px 12px;
+    }
+
+    .illust-progress-close {
+        width: 26px;
+        height: 26px;
+    }
+
+    .illust-fab {
+        right: 12px;
+        bottom: calc(96px + env(safe-area-inset-bottom));
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+    }
+}

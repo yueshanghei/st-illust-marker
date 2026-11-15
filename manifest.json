@@ -1,0 +1,13 @@
+{
+    "display_name": "插图标记自动配图",
+    "loading_order": 90,
+    "requires": [],
+    "optional": [],
+    "js": "dist/index.js",
+    "css": "style.css",
+    "author": "illust-marker contributors",
+    "version": "2.0.0",
+    "homePage": "https://github.com/",
+    "auto_update": false,
+    "minimum_client_version": "1.12.0"
+}

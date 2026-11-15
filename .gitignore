@@ -1,0 +1,12 @@
+node_modules/
+*.log
+
+# 本地开发时把真实 Key 写进临时设置文件里，别提交
+local-settings*.json
+.env
+.env.*
+
+# 操作系统噪声
+.DS_Store
+Thumbs.db
+desktop.ini
